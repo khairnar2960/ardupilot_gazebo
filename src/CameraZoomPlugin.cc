@@ -124,6 +124,9 @@ class CameraZoomPlugin::Impl
   /// \brief Flag to mark if zoom command has changed.
   public: std::atomic<bool> zoomChanged{false};
 
+  /// \brief Flag to report the applied FOV once after each zoom command.
+  public: std::atomic<bool> reportAppliedZoom{false};
+
   /// \brief Value of the most recently received zoom command.
   public: std::atomic<double> zoomCommand{1.0};
 
@@ -193,6 +196,7 @@ void CameraZoomPlugin::Impl::OnZoom(const msgs::Double &_msg)
 {
   this->zoomCommand = _msg.data();
   this->zoomChanged = true;
+  this->reportAppliedZoom = true;
 }
 
 //////////////////////////////////////////////////
@@ -440,7 +444,14 @@ void CameraZoomPlugin::PreUpdate(
   // Goal is achieved, nothing to update.
   if (std::abs(this->impl->goalHfov - oldHfov) <
     std::numeric_limits<double>::epsilon())
+  {
+    if (this->impl->reportAppliedZoom.exchange(false))
+    {
+      gzmsg << "CameraZoomPlugin: zoom applied; horizontal FOV = "
+            << oldHfov << " rad.\n";
+    }
     return;
+  }
 
   const auto curFocalLength = cameraSdf->LensFocalLength();
 
@@ -483,6 +494,14 @@ void CameraZoomPlugin::PreUpdate(
 
   // Update rendering camera.
   this->impl->camera->SetHFOV(newHfov);
+
+  if (std::abs(this->impl->goalHfov - newHfov) <
+      std::numeric_limits<double>::epsilon() &&
+      this->impl->reportAppliedZoom.exchange(false))
+  {
+    gzmsg << "CameraZoomPlugin: zoom applied; horizontal FOV = "
+          << newHfov << " rad.\n";
+  }
 }
 
 //////////////////////////////////////////////////

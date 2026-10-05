@@ -1,0 +1,21 @@
+{
+  "version": 3,
+  "configurePresets": [
+    {
+      "name": "argos-jetty",
+      "displayName": "Argos Gazebo Jetty",
+      "generator": "Unix Makefiles",
+      "binaryDir": "${sourceDir}/build",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "GZ_VERSION": "jetty"
+      }
+    }
+  ],
+  "buildPresets": [
+    {
+      "name": "argos-jetty",
+      "configurePreset": "argos-jetty"
+    }
+  ]
+}

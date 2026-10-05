@@ -17,7 +17,17 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 # --------------------------------------------------------------------------- #
 # Find gz-sim and dependencies.
 
-if("$ENV{GZ_VERSION}" STREQUAL "harmonic" OR NOT DEFINED "ENV{GZ_VERSION}")
+if(NOT DEFINED GZ_VERSION)
+  if(DEFINED ENV{GZ_VERSION} AND NOT "$ENV{GZ_VERSION}" STREQUAL "")
+    set(GZ_VERSION "$ENV{GZ_VERSION}" CACHE STRING "Gazebo release")
+  else()
+    set(GZ_VERSION "harmonic" CACHE STRING "Gazebo release")
+  endif()
+endif()
+set_property(CACHE GZ_VERSION PROPERTY STRINGS
+  garden harmonic ionic jetty)
+
+if("${GZ_VERSION}" STREQUAL "harmonic")
   # Harmonic (default)
   find_package(gz-cmake3 REQUIRED)
   set(GZ_CMAKE_VER ${gz-cmake3_VERSION_MAJOR})
@@ -32,7 +42,7 @@ if("$ENV{GZ_VERSION}" STREQUAL "harmonic" OR NOT DEFINED "ENV{GZ_VERSION}")
   set(GZ_SIM_VER ${gz-sim8_VERSION_MAJOR})
 
   message(STATUS "Compiling against Gazebo Harmonic")
-elseif("$ENV{GZ_VERSION}" STREQUAL "ionic")
+elseif("${GZ_VERSION}" STREQUAL "ionic")
   # Ionic
   find_package(gz-cmake4 REQUIRED)
   set(GZ_CMAKE_VER ${gz-cmake4_VERSION_MAJOR})
@@ -47,7 +57,7 @@ elseif("$ENV{GZ_VERSION}" STREQUAL "ionic")
   set(GZ_SIM_VER ${gz-sim9_VERSION_MAJOR})
 
   message(STATUS "Compiling against Gazebo Ionic")
-elseif("$ENV{GZ_VERSION}" STREQUAL "jetty")
+elseif("${GZ_VERSION}" STREQUAL "jetty")
   # Jetty
   find_package(gz-cmake REQUIRED)
   set(GZ_CMAKE_VER "")
@@ -62,7 +72,7 @@ elseif("$ENV{GZ_VERSION}" STREQUAL "jetty")
   set(GZ_SIM_VER "")
 
   message(STATUS "Compiling against Gazebo Jetty")
-elseif("$ENV{GZ_VERSION}" STREQUAL "garden")
+elseif("${GZ_VERSION}" STREQUAL "garden")
   # Garden
   find_package(gz-cmake3 REQUIRED)
   set(GZ_CMAKE_VER ${gz-cmake3_VERSION_MAJOR})
@@ -78,7 +88,7 @@ elseif("$ENV{GZ_VERSION}" STREQUAL "garden")
 
   message(STATUS "Compiling against Gazebo Garden")
 else()  
-  message(FATAL_ERROR "Unsupported GZ_VERSION: $ENV{GZ_VERSION}")
+  message(FATAL_ERROR "Unsupported GZ_VERSION: ${GZ_VERSION}")
 endif()
 
 # --------------------------------------------------------------------------- #
@@ -128,6 +138,20 @@ target_link_libraries(CameraZoomPlugin PRIVATE
   gz-sim${GZ_SIM_VER}::gz-sim${GZ_SIM_VER}
 )
 
+add_library(ArgosCameraControllerPlugin
+  SHARED
+  src/ArgosCameraController.cc
+  src/SocketUDP.cc
+)
+target_include_directories(ArgosCameraControllerPlugin PRIVATE
+  include
+  ${OpenCV_INCLUDE_DIRS}
+)
+target_link_libraries(ArgosCameraControllerPlugin PRIVATE
+  gz-sim${GZ_SIM_VER}::gz-sim${GZ_SIM_VER}
+  ${OpenCV_LIBS}
+)
+
 add_library(GstCameraPlugin
   SHARED
   src/GstCameraPlugin.cc
@@ -151,6 +175,7 @@ install(
   ArduPilotPlugin
   ParachutePlugin
   CameraZoomPlugin
+  ArgosCameraControllerPlugin
   GstCameraPlugin
   DESTINATION lib/${PROJECT_NAME}
 )

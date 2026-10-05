@@ -44,6 +44,11 @@ namespace systems {
 ///  <use_cuda>            set to true to use CUDA (if available)
 ///  <image_topic>         the camera image topic
 ///  <enable_topic>        the topic to enable / disable video streaming
+///  <start_streaming>     start streaming on the first image, defaults to false
+///  <record_command_topic> receive requests for sensor-frame video recording
+///  <record_result_topic> publish video recording start/stop results
+///  <recording_directory> output directory for MP4 recordings
+///  <recording_rate>      frame rate advertised to the recording encoder
 ///
 /// Start streaming
 ///   assumes: <enable_topic>/camera/enable_streaming<enable_topic>
